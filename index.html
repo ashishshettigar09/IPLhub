@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPL Team Auction Desk | 12 Franchises, Retentions & Playing XI Commander</title>
+  <meta name="description" content="Local offline application for IPL Mega Auction 2027. 12-team retention tracker with ₹125 Cr starting purse, RTM cards, draggable Playing 11, and live bidding engine.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="desktop-app-body">
+
+  <!-- TOP APP TITLEBAR & PURSE COMMAND DECK -->
+  <header class="app-topbar">
+    <div class="topbar-inner">
+      <div class="app-branding">
+        <div class="brand-tag">IPL 2027 MEGA AUCTION • CHENNAI SUPER KINGS (CSK) COMMAND DESK</div>
+        <div class="team-title-row">
+          <span class="team-shield-icon" id="topbarTeamEmoji">🦁</span>
+          <h1 class="my-team-heading" id="myTeamTitle">CHENNAI SUPER KINGS (CSK)</h1>
+          <button id="editTeamNameBtn" class="btn-text-sm" title="Edit Squad Name">✏️ Rename</button>
+        </div>
+      </div>
+
+      <!-- Live Budget Counters for Our Team -->
+      <div class="purse-summary-deck">
+        <!-- Total Budget Setting (₹125 Cr Default as per 2027 Rules) -->
+        <div class="purse-chip">
+          <span class="chip-label">STARTING PURSE</span>
+          <div class="chip-input-wrap">
+            <span class="currency-tag">₹</span>
+            <input type="number" id="totalPurseInput" class="inline-purse-input" value="125.00" step="1.0" min="10" max="300">
+            <span class="unit-tag">Cr</span>
+          </div>
+        </div>
+
+        <!-- Total Spent -->
+        <div class="purse-chip">
+          <span class="chip-label">TOTAL SPENT</span>
+          <div class="chip-stat-wrap">
+            <span class="stat-number spent-color">₹ <span id="totalSpentText">0.00</span> Cr</span>
+            <span class="stat-sub" id="spentLakhsText">₹ 0 L</span>
+          </div>
+        </div>
+
+        <!-- Remaining Amount (Auto-Calculated & Highlighted) -->
+        <div class="purse-chip remaining-chip" id="remainingChipBox">
+          <div class="chip-label-row">
+            <span class="chip-label">REMAINING PURSE</span>
+            <span class="status-pill safe" id="purseStatusPill">Safe</span>
+          </div>
+          <div class="chip-stat-wrap">
+            <span class="stat-number highlight-balance">₹ <span id="remainingPurseText">125.00</span> Cr</span>
+            <span class="stat-sub" id="remainingLakhsText">₹ 12,500 Lakhs remaining</span>
+          </div>
+        </div>
+
+        <!-- Squad Capacity -->
+        <div class="purse-chip">
+          <span class="chip-label">SQUAD CAPACITY</span>
+          <div class="chip-stat-wrap">
+            <span class="stat-number" id="squadCountText">0 / 30</span>
+            <span class="stat-sub" id="squadSlotsLeftText">30 Slots Available</span>
+          </div>
+        </div>
+
+        <!-- RTM Cards & Safe Max Bid -->
+        <div class="purse-chip max-bid-chip">
+          <div class="chip-label-row">
+            <span class="chip-label">RTM CARDS & MAX BID</span>
+            <span class="status-pill rtm-pill" id="ourTeamRtmPill">5 RTMs</span>
+          </div>
+          <div class="chip-stat-wrap">
+            <span class="stat-number brand-color">₹ <span id="maxSafeBidText">119.20</span> Cr</span>
+            <span class="stat-sub">Max safe bid leaving min reserve</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="topbar-actions">
+        <button id="viewRulesBtn" class="btn btn-secondary btn-sm" title="View official 2027 Retention & RTM rules">📜 Rules Table</button>
+        <button id="quickFillDemoBtn" class="btn btn-secondary btn-sm" title="Fill sample team to test budget">Demo Squad</button>
+        <button id="exportSquadSheetBtn" class="btn btn-primary btn-sm">📄 Export Sheet</button>
+        <button id="resetAllDataBtn" class="btn btn-danger-ghost btn-sm" title="Reset all data">Reset</button>
+      </div>
+    </div>
+
+    <!-- Squad Composition & Rules Indicator Strip -->
+    <div class="squad-composition-bar">
+      <div class="comp-item">
+        <span class="comp-icon">🏏</span>
+        <span class="comp-text">Batters: <strong id="countBatters">0</strong></span>
+      </div>
+      <div class="comp-divider"></div>
+      <div class="comp-item">
+        <span class="comp-icon">🧤</span>
+        <span class="comp-text">WKs: <strong id="countKeepers">0</strong></span>
+        <span class="comp-rule-pill" id="wkRulePill">Min 1 Required</span>
+      </div>
+      <div class="comp-divider"></div>
+      <div class="comp-item">
+        <span class="comp-icon">⚡</span>
+        <span class="comp-text">All-Rounders: <strong id="countAllRounders">0</strong></span>
+      </div>
+      <div class="comp-divider"></div>
+      <div class="comp-item">
+        <span class="comp-icon">🎯</span>
+        <span class="comp-text">Bowlers: <strong id="countBowlers">0</strong></span>
+        <span class="comp-rule-pill" id="bowlerRulePill">Min 5 Bowling Options</span>
+      </div>
+      <div class="comp-divider"></div>
+      <div class="comp-item">
+        <span class="comp-icon">✈️</span>
+        <span class="comp-text">Overseas Squad: <strong id="countOverseas">0 / 8</strong></span>
+        <span class="comp-rule-pill" id="osRulePill">Max 8 in 30</span>
+      </div>
+      <div class="comp-divider"></div>
+      <div class="comp-item highlight-xi-comp">
+        <span class="comp-icon">⭐</span>
+        <span class="comp-text">Playing XI: <strong id="countXiSlots">0 / 11</strong></span>
+        <span class="comp-rule-pill" id="xiOverseasRulePill">XI OS: 0 / 4</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN DUAL APPLICATION VIEW -->
+  <main class="app-workspace">
+    
+    <!-- LEFT COLUMN: LIVE AUCTION BLOCK & PLAYER FINDER -->
+    <section class="auction-live-block" aria-label="Live Auction Stage">
+      
+      <!-- STAGE 1: ACTIVE PLAYER IN AUCTION (THE HAMMER STAGE) -->
+      <div class="stage-card" id="currentAuctionStage">
+        <div class="stage-header">
+          <span class="stage-badge live-blink">🔴 CURRENT PLAYER ON THE BLOCK</span>
+          <span class="stage-callout" id="stageStatusNote">Select or search any player below to put on auction</span>
+        </div>
+
+        <div class="stage-player-profile" id="stagePlayerBox">
+          <!-- Default placeholder when no player is selected -->
+          <div class="empty-stage-prompt">
+            <span class="hammer-icon">🔨</span>
+            <h3>No Player Currently On The Block</h3>
+            <p>Click any player in the directory or search below. When on the hammer, you can sell them to <strong>Our Team</strong> or select any of the <strong>11 Rival Franchises</strong> with live purse deductions.</p>
+          </div>
+        </div>
+
+        <!-- Live Bidding & Action Control Pad -->
+        <div class="stage-action-pad" id="stageActionPad" style="display: none;">
+          <!-- Stepper strip -->
+          <div class="bid-calculator-strip">
+            <label for="liveBidPriceInput" class="bid-label">Final Winning Price (₹ Crores):</label>
+            <div class="bid-stepper-box">
+              <button class="step-adjust-btn" id="subBidStep">-0.25</button>
+              <div class="bid-input-inner">
+                <span class="currency-prefix">₹</span>
+                <input type="number" id="liveBidPriceInput" value="2.00" step="0.25" min="0.20" max="50.00">
+                <span class="currency-suffix">Cr</span>
+              </div>
+              <button class="step-adjust-btn" id="addBidStep025">+0.25</button>
+              <button class="step-adjust-btn" id="addBidStep050">+0.50</button>
+              <button class="step-adjust-btn" id="addBidStep100">+1.00</button>
+              <button class="step-adjust-btn" id="addBidStep200">+2.00</button>
+            </div>
+            <div class="bid-lakhs-conversion" id="stageLakhsConversion">₹ 200 Lakhs</div>
+          </div>
+
+          <!-- Target Slot selector for Our Team -->
+          <div class="target-slot-selector-row">
+            <label for="assignSlotSelect">Assign To Slot in Our 30-Player Roster:</label>
+            <select id="assignSlotSelect" class="slot-quick-dropdown">
+              <!-- Auto filled with open slots -->
+            </select>
+          </div>
+
+          <!-- THE TWO PRIMARY USER DECISION PATHS (NEAT, UN-SQUISHED & SPACIOUS) -->
+          <div class="auction-decision-stack">
+            
+            <!-- OPTION A: BOUGHT BY OUR TEAM (CSK) -->
+            <button id="btnBoughtByUs" class="btn-decision btn-buy-us full-width-decision">
+              <span class="btn-icon">✅</span>
+              <div class="btn-text-stack">
+                <span class="btn-main-title">BOUGHT BY CSK (OUR SQUAD)</span>
+                <span class="btn-sub-title">Draft into assigned slot & deduct from CSK purse</span>
+              </div>
+            </button>
+
+            <!-- OPTION B: SOLD TO RIVAL FRANCHISE -->
+            <div class="rival-sale-command-box">
+              <div class="rival-sale-header-row">
+                <div class="rival-header-badge">
+                  <span class="rival-dot">🔴</span>
+                  <span class="rival-box-title">SELL TO RIVAL FRANCHISE</span>
+                </div>
+                <label class="rtm-checkbox-container" title="Use Right To Match (RTM) card if team has RTM available">
+                  <input type="checkbox" id="rivalRtmCheckbox">
+                  <span class="rtm-label-text">Match with RTM</span>
+                  <span class="rtm-mini-count" id="rivalRtmMiniBadge">5 left</span>
+                </label>
+              </div>
+
+              <!-- Quick Rival Franchise Selection Pills (Wrapping neatly across 2 rows) -->
+              <div class="rival-pills-wrap" id="rivalQuickPillsContainer">
+                <!-- Dynamically populated with MI, RCB, KKR, SRH, RR, GT, LSG, DC, PBKS, KTK, PWI -->
+              </div>
+
+              <div class="rival-dropdown-wrap">
+                <label for="rivalTeamSelect" class="form-sublabel">Select Rival Franchise:</label>
+                <select id="rivalTeamSelect" class="rival-select-input-large">
+                  <!-- Populated with all rival teams -->
+                </select>
+              </div>
+
+              <button id="btnSoldToRivalConfirm" class="btn-decision btn-sold-other full-width-decision">
+                <span class="btn-icon">🔨</span>
+                <div class="btn-text-stack">
+                  <span class="btn-main-title" id="btnSoldRivalLabel">SELL TO SELECTED TEAM</span>
+                  <span class="btn-sub-title" id="btnSoldRivalSub">Deducts price directly from their purse</span>
+                </div>
+              </button>
+            </div>
+
+          </div>
+
+          <div class="secondary-stage-actions">
+            <button id="btnMarkUnsold" class="btn-action-ghost">Pass / Unsold</button>
+            <button id="btnClearStage" class="btn-action-ghost">Clear Stage</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 2: PLAYER SEARCH & DIRECTORY (280+ STARS WITH /100 RATINGS) -->
+      <div class="player-directory-card">
+        <div class="directory-header">
+          <div class="dir-title-row">
+            <h3>Player Directory (318+ Stars)</h3>
+            <span class="pool-count-tag" id="poolRemainingCount">All Available</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button id="returnToStageBtn" class="btn btn-secondary btn-xs" title="Scroll back up to auction hammer stage">⬆ Hammer Stage</button>
+            <button id="openAddCustomModalBtn" class="btn btn-secondary btn-xs">+ Add Unlisted</button>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-input-box">
+          <span class="search-lens">🔍</span>
+          <input type="text" id="directorySearchInput" placeholder="Type player name (e.g. Ayush Mhatre, Bumrah, Kohli, Head)..." autocomplete="off">
+          <button id="clearDirectorySearchBtn" class="btn-clear-x" style="display:none;">&times;</button>
+        </div>
+
+        <!-- Role Filter Tabs -->
+        <div class="filter-pills-row">
+          <button class="dir-pill active" data-dir-filter="all">All</button>
+          <button class="dir-pill" data-dir-filter="Batter">🏏 Batters</button>
+          <button class="dir-pill" data-dir-filter="Wicketkeeper">🧤 Keepers</button>
+          <button class="dir-pill" data-dir-filter="All-Rounder">⚡ All-Rounders</button>
+          <button class="dir-pill" data-dir-filter="Bowler">🎯 Bowlers</button>
+          <button class="dir-pill" data-dir-filter="Overseas">✈️ Overseas</button>
+          <button class="dir-pill" data-dir-filter="Top90">⭐ 90+ Rating</button>
+          <button class="dir-pill" data-dir-filter="Retained">🔒 Retained</button>
+        </div>
+
+        <!-- Interactive Player Cards List -->
+        <div class="directory-list-scroll" id="directoryPlayersContainer">
+          <!-- Populated from IPL_PLAYERS_MASTER -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: MULTI-VIEW WORKSPACE (OUR SQUAD WITH DRAG-DROP, 12 TEAMS, AND SOLD TRACKER) -->
+    <section class="squad-workspace-block" aria-label="Team Management">
+      
+      <!-- TOP WORKSPACE TABS BAR -->
+      <div class="workspace-tabs-bar">
+        <div class="tabs-group">
+          <button class="ws-tab active" id="tabMySquadBtn" data-target="mySquadView">
+            <span class="tab-label">🦁 Our Squad (CSK) & Playing XI (30 Slots)</span>
+            <span class="tab-count-badge" id="squadTabBadge">0</span>
+          </button>
+          <button class="ws-tab" id="tabAllTeamsBtn" data-target="teamsWorkspaceView">
+            <span class="tab-label">🏆 12 Franchises & Retentions</span>
+            <span class="tab-count-badge team-badge" id="teamsTabBadge">12</span>
+          </button>
+          <button class="ws-tab" id="tabSoldOtherBtn" data-target="soldOtherView">
+            <span class="tab-label">❌ Sold To Rival Teams Log</span>
+            <span class="tab-count-badge other-badge" id="soldOtherTabBadge">0</span>
+          </button>
+        </div>
+
+        <!-- Squad subfilters (Active only when on squad tab) -->
+        <div class="squad-filter-actions" id="squadFilterBar">
+          <button class="squad-view-pill active" data-squad-filter="all">All (30)</button>
+          <button class="squad-view-pill" data-squad-filter="xi">Playing XI (1-11)</button>
+          <button class="squad-view-pill" data-squad-filter="reserves">Reserves (12-30)</button>
+          <button class="squad-view-pill" data-squad-filter="filled">Bought Only</button>
+        </div>
+      </div>
+
+      <!-- DEDICATED INDEPENDENT SCROLL AREA FOR SQUAD & TEAMS -->
+      <div class="workspace-scroll-area" id="workspaceScrollArea">
+
+        <!-- ========================================================
+             VIEW A: OUR SQUAD 30-PLAYER LIST WITH DRAG & DROP REORDERING
+           ======================================================== -->
+      <div class="workspace-view active" id="mySquadView">
+        <div class="slots-info-header">
+          <div>
+            <h2 class="slots-info-title">Tactical Squad & Interactive Playing XI</h2>
+            <p class="slots-info-desc">
+              <strong>Drag & Drop cards</strong> using the ⠿ grip to rearrange your Playing XI batting order or swap players with reserves. Edit slot prices directly anytime!
+            </p>
+          </div>
+          <div class="slots-header-actions">
+            <button id="manageOurRetentionsBtn" class="btn btn-primary btn-xs" title="Manage retentions for our team">
+              🔒 Retain Players (Up to 5)
+            </button>
+            <button id="autoBalanceSlotsBtn" class="btn btn-secondary btn-xs" title="Auto distribute remaining purse across empty slots">
+              ⚖️ Auto-Distribute Purse
+            </button>
+          </div>
+        </div>
+
+        <!-- Playing XI Drag & Drop Banner Strip -->
+        <div class="xi-drag-instruction-strip">
+          <div class="instruction-left">
+            <span class="drag-icon-pulse">⠿</span>
+            <span><strong>Playing XI (Slots 1–11):</strong> Drag cards to rearrange order • Max 4 Overseas allowed in XI</span>
+          </div>
+          <div class="xi-stats-pill-group">
+            <span class="xi-stat-pill" id="xiOverseasCountBadge">✈️ 0 / 4 Overseas</span>
+            <span class="xi-stat-pill" id="xiKeepersCountBadge">🧤 0 Keepers</span>
+            <span class="xi-stat-pill" id="xiBowlersCountBadge">🎯 0 Bowling Options</span>
+          </div>
+        </div>
+
+        <!-- 30 Squad Slots Container (Draggable) -->
+        <div class="squad-slots-grid" id="squadSlotsContainer">
+          <!-- Populated dynamically (11 Playing XI + 19 Reserves) with drag handles -->
+        </div>
+      </div>
+
+      <!-- ========================================================
+           VIEW B: 12 FRANCHISES & RETENTIONS DESK (THE VERDICT 2027 ENGINE)
+           ======================================================== -->
+      <div class="workspace-view" id="teamsWorkspaceView" style="display: none;">
+        
+        <!-- 2027 Retention Rules Summary Banner -->
+        <div class="rules-summary-deck">
+          <div class="rules-deck-left">
+            <div class="rules-deck-title">
+              <span class="rules-badge-tag">IPL 2027 VERDICT RULES</span>
+              <h3>Franchise Purses, Retentions & RTM Cards</h3>
+            </div>
+            <p class="rules-deck-desc">
+              Every team begins with <strong>₹125 Crore Starting Purse</strong>. Each team may retain up to <strong>5 players</strong>. Unused retention slots convert 1:1 into <strong>Right To Match (RTM) cards</strong>.
+            </p>
+            <div class="rule-slots-mini-chips">
+              <span class="rule-mini-chip">1st: ₹18 Cr</span>
+              <span class="rule-mini-chip">2nd: ₹14 Cr</span>
+              <span class="rule-mini-chip">3rd: ₹11 Cr</span>
+              <span class="rule-mini-chip">4th: ₹18 Cr (Capped) / ₹8 Cr (Uncapped)</span>
+              <span class="rule-mini-chip">5th: ₹14 Cr (Capped) / ₹4 Cr (Uncapped)</span>
+            </div>
+          </div>
+          <div class="rules-deck-right">
+            <button id="openFullRulesBtn" class="btn btn-secondary btn-sm">📋 View Full Combinations</button>
+          </div>
+        </div>
+
+        <!-- Team Filter Strip -->
+        <div class="teams-filter-bar">
+          <div class="team-filter-pills">
+            <button class="team-view-pill active" data-team-filter="all">All 12 Franchises</button>
+            <button class="team-view-pill" data-team-filter="our">Our Team</button>
+            <button class="team-view-pill" data-team-filter="rivals">Rival Franchises (11)</button>
+            <button class="team-view-pill" data-team-filter="active">Teams with Retentions</button>
+          </div>
+          <div class="team-search-box">
+            <input type="text" id="teamSearchInput" placeholder="Filter franchise (e.g. CSK, MI, RCB)..." class="team-search-field">
+          </div>
+        </div>
+
+        <!-- 12 Teams Grid -->
+        <div class="teams-cards-grid" id="teamsGridContainer">
+          <!-- Dynamically populated with 12 Franchise Cards -->
+        </div>
+
+      </div>
+
+      <!-- ========================================================
+           VIEW C: SOLD TO OTHER TEAMS LOG
+           ======================================================== -->
+      <div class="workspace-view" id="soldOtherView" style="display: none;">
+        <div class="slots-info-header">
+          <div>
+            <h2 class="slots-info-title">Players Taken by Rival Teams</h2>
+            <p class="slots-info-desc">Complete log of players sold to competitor franchises. You can edit their price or undo anytime if a mistake was made!</p>
+          </div>
+          <span class="other-total-count" id="otherSoldTotalCount">0 Players Sold to Rivals</span>
+        </div>
+
+        <div class="sold-other-table-container">
+          <table class="sold-other-table">
+            <thead>
+              <tr>
+                <th>Player Name</th>
+                <th>Bought By Franchise</th>
+                <th>Role & Style</th>
+                <th>Rating /100</th>
+                <th>Category</th>
+                <th style="text-align: right;">Sold Price</th>
+                <th style="text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="soldOtherTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+          <div class="empty-state-notice" id="soldOtherEmptyNotice">
+            No players marked as sold to rival teams yet. When a player is bought by another franchise, select their team and click <strong>"Sell to Team"</strong> on the auction block.
+          </div>
+        </div>
+      </div>
+
+      </div> <!-- /workspace-scroll-area -->
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================
+       MODAL 1: TEAM RETENTION MANAGER (UP TO 5 RETENTIONS PER TEAM)
+       ======================================================== -->
+  <div class="modal-backdrop" id="teamRetentionModal" aria-hidden="true">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-with-badge">
+          <span class="modal-team-icon" id="retentionModalTeamEmoji">🦁</span>
+          <div>
+            <h3 class="modal-title" id="retentionModalTeamTitle">Chennai Super Kings - Retention Manager</h3>
+            <span class="modal-sub-info" id="retentionModalPurseStats">Starting Purse: ₹125.00 Cr | Spent: ₹0.00 Cr | RTMs: 5 Available</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="teamRetentionModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Top Retention Slots Overview (1 to 5) -->
+        <div class="retention-slots-status-bar" id="retentionSlotsStatusBar">
+          <!-- 5 Slot indicator boxes -->
+        </div>
+
+        <!-- Add Player to Retention Form -->
+        <div class="add-retention-form-box" id="addRetentionBox">
+          <h4 class="section-subheading">Select Player to Retain (Slot <span id="retentionSlotNumberDisplay">1</span> of 5)</h4>
+          
+          <div class="retention-form-grid">
+            <!-- Player Picker from Directory -->
+            <div class="form-group span-2">
+              <label for="retentionPlayerSelect" class="form-label">Search / Select Player from Registry:</label>
+              <div class="retention-player-combobox">
+                <input type="text" id="retentionPlayerSearchInput" class="form-input" placeholder="Type to filter player (e.g. Ruturaj, Jadeja, Dhoni, Bumrah)..." autocomplete="off">
+                <select id="retentionPlayerSelect" class="form-select retention-select-dropdown">
+                  <!-- Populated from player directory -->
+                </select>
+              </div>
+            </div>
+
+            <!-- Slot Selection -->
+            <div class="form-group">
+              <label for="retentionSlotSelect" class="form-label">Retention Slot:</label>
+              <select id="retentionSlotSelect" class="form-select">
+                <option value="1">1st Slot (₹18 Cr standard)</option>
+                <option value="2">2nd Slot (₹14 Cr standard)</option>
+                <option value="3">3rd Slot (₹11 Cr standard)</option>
+                <option value="4">4th Slot (₹18 Cr Capped / ₹8 Cr Uncapped)</option>
+                <option value="5">5th Slot (₹14 Cr Capped / ₹4 Cr Uncapped)</option>
+              </select>
+            </div>
+
+            <!-- Capped vs Uncapped Toggle -->
+            <div class="form-group">
+              <label class="form-label">Player Type (Rule 6):</label>
+              <div class="capped-toggle-group">
+                <label class="toggle-pill">
+                  <input type="radio" name="retentionCappedType" id="typeCappedRadio" value="capped" checked>
+                  <span>Capped</span>
+                </label>
+                <label class="toggle-pill">
+                  <input type="radio" name="retentionCappedType" id="typeUncappedRadio" value="uncapped">
+                  <span>Uncapped</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Price in Crores (Auto-Calculated, Fully Editable as per user instructions) -->
+            <div class="form-group">
+              <label for="retentionPriceInput" class="form-label">Retention Price (₹ Cr) [Editable]:</label>
+              <div class="bid-input-inner">
+                <span class="currency-prefix">₹</span>
+                <input type="number" id="retentionPriceInput" class="form-input" step="0.25" min="0.20" max="30.00" value="18.00">
+                <span class="currency-suffix">Cr</span>
+              </div>
+              <span class="form-hint" id="retentionRulePriceHint">Rule standard: ₹18.00 Cr (Editable if needed)</span>
+            </div>
+
+            <!-- Add Button -->
+            <div class="form-group form-actions-inline">
+              <button type="button" id="btnConfirmAddRetention" class="btn btn-primary btn-block">
+                🔒 Retain Player for Team
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Currently Retained Players Table -->
+        <div class="current-retentions-list-section">
+          <h4 class="section-subheading">Current Retained Players for This Franchise</h4>
+          <div class="retention-table-wrap">
+            <table class="custom-table" id="retentionsTable">
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Player Name</th>
+                  <th>Role & Style</th>
+                  <th>Type</th>
+                  <th>Rating</th>
+                  <th style="text-align: right;">Retention Price</th>
+                  <th style="text-align: center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="retentionsTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+            <div class="empty-state-notice" id="retentionsEmptyNotice" style="display:none;">
+              No players retained by this team yet. Maximum 5 players may be retained.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <span class="modal-footer-note">Unused retention slots automatically convert to RTM cards (up to 5 total).</span>
+        <button type="button" class="btn btn-secondary" data-close-modal="teamRetentionModal">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 2: TEAM FULL SQUAD DRAWER (EDIT PRICES & MANAGE BUYS)
+       ======================================================== -->
+  <div class="modal-backdrop" id="teamSquadModal" aria-hidden="true">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-with-badge">
+          <span class="modal-team-icon" id="squadModalTeamEmoji">🦁</span>
+          <div>
+            <h3 class="modal-title" id="squadModalTeamTitle">Team Full Squad Roster</h3>
+            <span class="modal-sub-info" id="squadModalTeamSubtitle">Edit player amounts or release players anytime</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" data-close-modal="teamSquadModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Team Financial & Capacity Strip -->
+        <div class="team-modal-stat-strip" id="teamModalStatStrip">
+          <!-- Dynamically populated: Starting Purse, Spent, Remaining, RTMs, Squad Size -->
+        </div>
+
+        <div class="team-squad-table-wrap">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player Name</th>
+                <th>Role & Style</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th style="text-align: right;">Price (₹ Cr) [Editable]</th>
+                <th style="text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="teamSquadTableBody">
+              <!-- Dynamically populated with editable inputs -->
+            </tbody>
+          </table>
+          <div class="empty-state-notice" id="teamSquadEmptyNotice" style="display:none;">
+            No players in this franchise yet.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <span class="modal-footer-note">Changes to player prices immediately update the team's remaining purse balance.</span>
+        <button type="button" class="btn btn-primary" data-close-modal="teamSquadModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 3: 2027 RETENTION & RTM RULES TABLE ("THE VERDICT")
+       ======================================================== -->
+  <div class="modal-backdrop" id="retentionRulesModal" aria-hidden="true">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">THE VERDICT: IPL Mega Auction 2027 — Retention & RTM Rules</h3>
+        <button class="modal-close-btn" data-close-modal="retentionRulesModal">&times;</button>
+      </div>
+      <div class="modal-body rules-document-body">
+        
+        <div class="rule-doc-section">
+          <h4>1. Starting Purse & Retention Limit</h4>
+          <p>Every team begins with <strong>₹125 Crore Starting Purse</strong>. Each team may retain a maximum of <strong>5 players</strong> before the auction. A team may choose to retain fewer than 5 players.</p>
+        </div>
+
+        <div class="rule-doc-section">
+          <h4>2. Retention Price Structure</h4>
+          <table class="rules-table-clean">
+            <thead>
+              <tr>
+                <th>Retention Slot</th>
+                <th>Player Type</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1st Slot</td><td>Capped</td><td><strong>₹18 Cr</strong></td></tr>
+              <tr><td>2nd Slot</td><td>Capped</td><td><strong>₹14 Cr</strong></td></tr>
+              <tr><td>3rd Slot</td><td>Capped</td><td><strong>₹11 Cr</strong></td></tr>
+              <tr><td>4th Slot</td><td>Capped</td><td><strong>₹18 Cr</strong></td></tr>
+              <tr><td>4th Slot</td><td>Uncapped</td><td><strong>₹8 Cr</strong></td></tr>
+              <tr><td>5th Slot</td><td>Capped</td><td><strong>₹14 Cr</strong></td></tr>
+              <tr><td>5th Slot</td><td>Uncapped</td><td><strong>₹4 Cr</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rule-doc-section">
+          <h4>3. RTM Conversion Rule</h4>
+          <p>Any unused retention slot is automatically converted into one Right to Match (RTM) card. The maximum combined number of retentions and RTMs is therefore <strong>5</strong>.</p>
+          <table class="rules-table-clean">
+            <thead>
+              <tr>
+                <th>Players Retained</th>
+                <th>Unused Slots</th>
+                <th>RTMs Available</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>5</td><td>0</td><td><strong>0</strong></td></tr>
+              <tr><td>4</td><td>1</td><td><strong>1</strong></td></tr>
+              <tr><td>3</td><td>2</td><td><strong>2</strong></td></tr>
+              <tr><td>2</td><td>3</td><td><strong>3</strong></td></tr>
+              <tr><td>1</td><td>4</td><td><strong>4</strong></td></tr>
+              <tr><td>0</td><td>5</td><td><strong>5</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rule-doc-section">
+          <h4>4. Permitted Retention Combinations</h4>
+          <table class="rules-table-clean">
+            <thead>
+              <tr>
+                <th>Retentions</th>
+                <th>Retention Cost</th>
+                <th>RTMs</th>
+                <th>Purse Remaining</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>0</td><td>₹0 Cr</td><td>5</td><td>₹125 Cr</td></tr>
+              <tr><td>1</td><td>₹18 Cr</td><td>4</td><td>₹107 Cr</td></tr>
+              <tr><td>2</td><td>₹32 Cr</td><td>3</td><td>₹93 Cr</td></tr>
+              <tr><td>3</td><td>₹43 Cr</td><td>2</td><td>₹82 Cr</td></tr>
+              <tr><td>4 — 3 capped + 1 uncapped</td><td>₹51 Cr</td><td>1</td><td>₹74 Cr</td></tr>
+              <tr><td>4 — 4 capped</td><td>₹61 Cr</td><td>1</td><td>₹64 Cr</td></tr>
+              <tr><td>5 — 3 capped + 2 uncapped</td><td>₹55 Cr</td><td>0</td><td>₹70 Cr</td></tr>
+              <tr><td>5 — 4 capped + 1 uncapped</td><td>₹69 Cr</td><td>0</td><td>₹56 Cr</td></tr>
+              <tr><td>5 — 5 capped</td><td>₹75 Cr</td><td>0</td><td>₹50 Cr</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rule-doc-section">
+          <h4>5. Uncapped & RTM Usage Rule</h4>
+          <p>The ₹8 Cr and ₹4 Cr values apply only when the respective retention slot is occupied by an uncapped player. An RTM card can be used during the auction to reclaim an eligible former player by matching the final winning bid, deducted from remaining purse.</p>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-close-modal="retentionRulesModal">Understood</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD UNLISTED / CUSTOM COLLEGE PLAYER -->
+  <div class="modal-backdrop" id="addCustomModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Unlisted Player / College Athlete</h3>
+        <button class="modal-close-btn" data-close-modal="addCustomModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="customPlayerForm" onsubmit="return false;">
+          <div class="form-group">
+            <label for="customPlayerName" class="form-label">Player Name:</label>
+            <input type="text" id="customPlayerName" class="form-input" placeholder="e.g. Rahul Sharma" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="customPlayerRole" class="form-label">Role:</label>
+              <select id="customPlayerRole" class="form-select">
+                <option value="Batter">Batter</option>
+                <option value="Wicketkeeper">Wicketkeeper</option>
+                <option value="All-Rounder">All-Rounder</option>
+                <option value="Bowler">Bowler</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="customPlayerRating" class="form-label">Rating (Scale of 100):</label>
+              <input type="number" id="customPlayerRating" class="form-input" min="50" max="100" value="85">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="customPlayerStyle" class="form-label">Playing Style:</label>
+            <input type="text" id="customPlayerStyle" class="form-input" placeholder="e.g. Right-hand Aggressive Opener / Left-arm Fast">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="customPlayerCountry" class="form-label">Category:</label>
+              <select id="customPlayerCountry" class="form-select">
+                <option value="India">🇮🇳 Indian</option>
+                <option value="Overseas">✈️ Overseas</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="customPlayerBasePrice" class="form-label">Base Price (₹ Cr):</label>
+              <input type="number" id="customPlayerBasePrice" class="form-input" step="0.10" min="0.20" max="20.00" value="0.50">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" data-close-modal="addCustomModal">Cancel</button>
+            <button type="submit" id="saveCustomPlayerBtn" class="btn btn-primary">Add to Directory</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SQUAD SUMMARY EXPORT SHEET -->
+  <div class="modal-backdrop" id="exportModal" aria-hidden="true">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">Official 30-Player Squad Sheet</h3>
+        <button class="modal-close-btn" data-close-modal="exportModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="export-preview-content" id="exportPreviewContainer">
+          <!-- Dynamically populated -->
+        </div>
+
+        <div class="modal-bottom-actions">
+          <button id="copyWhatsAppSummaryBtn" class="btn btn-secondary">📋 Copy for WhatsApp</button>
+          <button id="printRosterBtn" class="btn btn-primary">🖨️ Print / Save as PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastNotification" class="toast-container" aria-live="polite"></div>
+
+  <!-- SCRIPTS IN ORDER -->
+  <script src="teams-data.js"></script>
+  <script src="players-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

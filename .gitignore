@@ -1,0 +1,7 @@
+# Local temporary test artifacts
+screenshot_test.png
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
